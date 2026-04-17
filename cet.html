@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>四六级单词速记大师</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        // Tailwind 配置
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#722ED1',
+                        success: '#00B42A',
+                        danger: '#F53F3F',
+                        neutral: '#86909C',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+            }
+            .transition-custom {
+                transition: all 0.3s ease;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-custom min-h-screen">
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- 头部导航 -->
+        <header class="flex flex-col sm:flex-row justify-between items-center mb-8">
+            <div class="text-center sm:text-left mb-4 sm:mb-0">
+                <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    四六级单词速记大师
+                </h1>
+                <p class="text-neutral mt-1">英语四六级核心词汇速记游戏</p>
+            </div>
+            <div class="flex gap-3">
+                <button id="modeToggle" class="p-2 rounded-full bg-white dark:bg-gray-800 card-shadow hover:scale-110 transition-custom">
+                    <i class="fa fa-moon-o dark:hidden"></i>
+                    <i class="fa fa-sun-o hidden dark:inline"></i>
+                </button>
+                <button id="resetBtn" class="px-4 py-2 rounded-lg bg-danger text-white hover:bg-danger/90 transition-custom">
+                    <i class="fa fa-refresh mr-1"></i> 重置游戏
+                </button>
+            </div>
+        </header>
+
+        <!-- 统计面板 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-4 card-shadow">
+                <p class="text-neutral text-sm">总题数</p>
+                <p id="totalCount" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-4 card-shadow">
+                <p class="text-neutral text-sm">正确</p>
+                <p id="correctCount" class="text-2xl font-bold text-success">0</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-4 card-shadow">
+                <p class="text-neutral text-sm">错误</p>
+                <p id="wrongCount" class="text-2xl font-bold text-danger">0</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-4 card-shadow">
+                <p class="text-neutral text-sm">正确率</p>
+                <p id="accuracyRate" class="text-2xl font-bold text-primary">0%</p>
+            </div>
+        </div>
+
+        <!-- 游戏主区域 -->
+        <main class="bg-white dark:bg-gray-800 rounded-2xl p-6 md:p-8 card-shadow mb-8">
+            <!-- 单词显示区 -->
+            <div class="mb-8 text-center">
+                <div id="wordDisplay" class="text-[clamp(1.5rem,5vw,2.5rem)] font-bold mb-4 min-h-[60px] flex items-center justify-center">
+                    点击开始游戏
+                </div>
+                <div id="hint" class="text-neutral text-sm">准备好开始记忆单词了吗？</div>
+            </div>
+
+            <!-- 选项区域 -->
+            <div id="optionsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <button class="option-btn px-6 py-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-primary hover:bg-primary/5 transition-custom text-left">
+                    请先开始游戏
+                </button>
+                <button class="option-btn px-6 py-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-primary hover:bg-primary/5 transition-custom text-left">
+                    请先开始游戏
+                </button>
+                <button class="option-btn px-6 py-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-primary hover:bg-primary/5 transition-custom text-left">
+                    请先开始游戏
+                </button>
+                <button class="option-btn px-6 py-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-primary hover:bg-primary/5 transition-custom text-left">
+                    请先开始游戏
+                </button>
+            </div>
+
+            <!-- 控制按钮 -->
+            <div class="flex justify-center gap-4">
+                <button id="startBtn" class="px-8 py-3 rounded-lg bg-primary text-white hover:bg-primary/90 transition-custom font-medium">
+                    开始游戏
+                </button>
+                <button id="nextBtn" class="px-8 py-3 rounded-lg bg-secondary text-white hover:bg-secondary/90 transition-custom font-medium hidden">
+                    下一题
+                </button>
+            </div>
+        </main>
+
+        <!-- 错题本 -->
+        <section class="bg-white dark:bg-gray-800 rounded-2xl p-6 card-shadow mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold"><i class="fa fa-book mr-2 text-danger"></i>错题巩固</h2>
+                <span id="wrongWordsCount" class="bg-danger/10 text-danger px-3 py-1 rounded-full text-sm">0 个错题</span>
+            </div>
+            <div id="wrongWordsContainer" class="max-h-40 overflow-y-auto space-y-2 text-sm">
+                <p class="text-neutral text-center py-4">暂无错题</p>
+            </div>
+        </section>
+
+        <!-- 游戏结束弹窗 -->
+        <div id="gameOverModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 w-full max-w-md mx-4 transform transition-all scale-100">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fa fa-trophy text-2xl text-primary"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold mb-2">游戏完成！</h2>
+                    <p class="text-neutral mb-6">恭喜你完成了所有单词练习</p>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
+                            <p class="text-sm text-neutral">总题数</p>
+                            <p id="modalTotal" class="text-xl font-bold">0</p>
+                        </div>
+                        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
+                            <p class="text-sm text-neutral">正确率</p>
+                            <p id="modalAccuracy" class="text-xl font-bold text-primary">0%</p>
+                        </div>
+                    </div>
+                    
+                    <button id="restartBtn" class="w-full py-3 rounded-lg bg-primary text-white hover:bg-primary/90 transition-custom font-medium">
+                        重新开始
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 四六级核心词汇库（精选200个高频词汇）
+        const wordList = [
+            { word: "abandon", translation: "v. 放弃，抛弃" },
+            { word: "ability", translation: "n. 能力，才能" },
+            { word: "absence", translation: "n. 缺席，不在" },
+            { word: "absolute", translation: "adj. 绝对的，完全的" },
+            { word: "absorb", translation: "v. 吸收，吸引" },
+            { word: "abstract", translation: "adj. 抽象的" },
+            { word: "academic", translation: "adj. 学术的，教学的" },
+            { word: "accept", translation: "v. 接受，同意" },
+            { word: "access", translation: "n. 通道，入口；v. 进入" },
+            { word: "accompany", translation: "v. 陪伴，伴随" },
+            { word: "accomplish", translation: "v. 完成，实现" },
+            { word: "according", translation: "prep. 根据，按照" },
+            { word: "account", translation: "n. 账户，描述" },
+            { word: "accurate", translation: "adj. 准确的，精确的" },
+            { word: "achieve", translation: "v. 实现，达到" },
+            { word: "acquire", translation: "v. 获得，取得" },
+            { word: "adapt", translation: "v. 使适应，改编" },
+            { word: "adequate", translation: "adj. 足够的，适当的" },
+            { word: "adjust", translation: "v. 调整，调节" },
+            { word: "admit", translation: "v. 承认，准许进入" },
+            { word: "adopt", translation: "v. 采用，收养" },
+            { word: "affect", translation: "v. 影响，感动" },
+            { word: "afford", translation: "v. 买得起，提供" },
+            { word: "agency", translation: "n. 代理处，机构" },
+            { word: "aggressive", translation: "adj. 侵略性的，好斗的" },
+            { word: "agriculture", translation: "n. 农业，农学" },
+            { word: "analysis", translation: "n. 分析，分解" },
+            { word: "analyze", translation: "v. 分析，研究" },
+            { word: "announce", translation: "v. 宣布，宣告" },
+            { word: "anxiety", translation: "n. 焦虑，担心" },
+            { word: "apologize", translation: "v. 道歉，谢罪" },
+            { word: "apparent", translation: "adj. 显然的，表面上的" },
+            { word: "appreciate", translation: "v. 欣赏，感激" },
+            { word: "approach", translation: "v. 接近，着手处理" },
+            { word: "approve", translation: "v. 批准，赞成" },
+            { word: "argue", translation: "v. 争论，辩论" },
+            { word: "arrange", translation: "v. 安排，整理" },
+            { word: "arrest", translation: "v. 逮捕，拘留" },
+            { word: "assess", translation: "v. 评估，评价" },
+            { word: "assist", translation: "v. 帮助，协助" },
+            { word: "assume", translation: "v. 假定，承担" },
+            { word: "athlete", translation: "n. 运动员" },
+            { word: "attitude", translation: "n. 态度，看法" },
+            { word: "attract", translation: "v. 吸引，引起" },
+            { word: "audience", translation: "n. 观众，听众" },
+            { word: "available", translation: "adj. 可获得的" },
+            { word: "avoid", translation: "v. 避免，避开" },
+            { word: "award", translation: "n. 奖，奖品" },
+            { word: "aware", translation: "adj. 知道的，意识到的" },
+            { word: "balance", translation: "n. 平衡，均衡" },
+            { word: "ban", translation: "v. 禁止，取缔" },
+            { word: "bargain", translation: "n. 便宜货" },
+            { word: "barrier", translation: "n. 障碍，屏障" },
+            { word: "basis", translation: "n. 基础，根据" },
+            { word: "benefit", translation: "n. 利益，好处" },
+            { word: "betray", translation: "v. 背叛，出卖" },
+            { word: "blame", translation: "v. 责备，责怪" },
+            { word: "bother", translation: "v. 打扰，麻烦" },
+            { word: "breathe", translation: "v. 呼吸" },
+            { word: "calculate", translation: "v. 计算，估计" },
+            { word: "campus", translation: "n. 校园，校区" },
+            { word: "cancel", translation: "v. 取消，删去" },
+            { word: "capture", translation: "v. 捕获，占领" },
+            { word: "career", translation: "n. 生涯，职业" },
+            { word: "challenge", translation: "n. 挑战" },
+            { word: "character", translation: "n. 性格，品质" },
+            { word: "charge", translation: "v. 收费，指控" },
+            { word: "cheat", translation: "v. 欺骗，作弊" },
+            { word: "cheer", translation: "v. 欢呼，喝彩" },
+            { word: "choice", translation: "n. 选择，抉择" },
+            { word: "choke", translation: "v. 窒息，噎住" },
+            { word: "circumstance", translation: "n. 情况，环境" },
+            { word: "classify", translation: "v. 分类，归类" },
+            { word: "coach", translation: "n. 教练，长途汽车" },
+            { word: "collapse", translation: "v. 倒塌，崩溃" },
+            { word: "colleague", translation: "n. 同事，同僚" },
+            { word: "command", translation: "n. 命令，指挥" },
+            { word: "communicate", translation: "v. 交流，通讯" },
+            { word: "compare", translation: "v. 比较，对照" },
+            { word: "compete", translation: "v. 竞争，比赛" },
+            { word: "complain", translation: "v. 抱怨，控诉" },
+            { word: "complete", translation: "adj. 完整的，完成的" },
+            { word: "complex", translation: "adj. 复杂的，合成的" },
+            { word: "concern", translation: "n. 关心，关注" },
+            { word: "conduct", translation: "v. 引导，带领" },
+            { word: "confidence", translation: "n. 信心，信任" },
+            { word: "confirm", translation: "v. 确认，证实" },
+            { word: "confuse", translation: "v. 使混乱，困惑" },
+            { word: "congratulate", translation: "v. 祝贺，恭喜" },
+            { word: "connect", translation: "v. 连接，联合" },
+            { word: "consider", translation: "v. 考虑，认为" },
+            { word: "contact", translation: "v. 接触，联系" },
+            { word: "contain", translation: "v. 包含，容纳" },
+            { word: "continue", translation: "v. 继续，连续" },
+            { word: "contribute", translation: "v. 贡献，捐献" },
+            { word: "control", translation: "v. 控制，管理" },
+            { word: "convince", translation: "v. 说服，使确信" },
+            { word: "count", translation: "v. 计算，认为" },
+            { word: "courage", translation: "n. 勇气，胆量" },
+            { word: "cover", translation: "v. 覆盖，包括" },
+            { word: "crash", translation: "v. 碰撞，坠落" },
+            { word: "create", translation: "v. 创造，创作" },
+            { word: "credit", translation: "n. 信用，信誉" },
+            { word: "crime", translation: "n. 罪行，犯罪" },
+            { word: "criticize", translation: "v. 批评，评论" },
+            { word: "crowd", translation: "n. 人群，群众" },
+            { word: "cruel", translation: "adj. 残酷的，残忍的" },
+            { word: "curious", translation: "adj. 好奇的，古怪的" },
+            { word: "current", translation: "adj. 现在的，流通的" },
+            { word: "damage", translation: "n. 损害，损毁" },
+            { word: "dare", translation: "v. 敢，胆敢" },
+            { word: "deal", translation: "v. 处理，给予" },
+            { word: "debate", translation: "n. 辩论，讨论" },
+            { word: "debt", translation: "n. 债务，借款" },
+            { word: "decade", translation: "n. 十年，十年期" },
+            { word: "deceive", translation: "v. 欺骗，行骗" },
+            { word: "decide", translation: "v. 决定，下决心" },
+            { word: "declare", translation: "v. 宣布，声明" },
+            { word: "decrease", translation: "v. 减少，减小" },
+            { word: "defend", translation: "v. 辩护，防护" },
+            { word: "define", translation: "v. 定义，使明确" },
+            { word: "deliver", translation: "v. 交付，发表" },
+            { word: "demand", translation: "n. 需求，要求" },
+            { word: "depend", translation: "v. 依赖，依靠" },
+            { word: "depress", translation: "v. 压抑，使沮丧" },
+            { word: "describe", translation: "v. 描述，形容" },
+            { word: "deserve", translation: "v. 应受，应得" },
+            { word: "destroy", translation: "v. 破坏，消灭" },
+            { word: "determine", translation: "v. 确定，决定" },
+            { word: "develop", translation: "v. 开发，进步" },
+            { word: "devote", translation: "v. 致力于，奉献" },
+            { word: "dialogue", translation: "n. 对话，对白" },
+            { word: "digest", translation: "v. 消化，吸收" },
+            { word: "diminish", translation: "v. 减少，缩小" },
+            { word: "direct", translation: "adj. 直接的，亲身的" },
+            { word: "disappear", translation: "v. 消失，失踪" },
+            { word: "discover", translation: "v. 发现，发觉" },
+            { word: "discuss", translation: "v. 讨论，议论" },
+            { word: "disease", translation: "n. 病，疾病" },
+            { word: "dismiss", translation: "v. 解散，解雇" },
+            { word: "distance", translation: "n. 距离，远方" },
+            { word: "distant", translation: "adj. 遥远的，冷漠的" },
+            { word: "divide", translation: "v. 划分，除" },
+            { word: "doubt", translation: "n. 怀疑，疑问" },
+            { word: "draft", translation: "n. 草稿，草图" },
+            { word: "drag", translation: "v. 拖累，拖拉" },
+            { word: "dream", translation: "n. 梦想，愿望" },
+            { word: "dress", translation: "n. 连衣裙，衣服" },
+            { word: "drink", translation: "v. 喝，饮" },
+            { word: "drive", translation: "v. 驾驶，开车" },
+            { word: "drop", translation: "v. 滴，使降低" },
+            { word: "drown", translation: "v. 淹没，淹死" },
+            { word: "drug", translation: "n. 药，毒品" },
+            { word: "dry", translation: "adj. 干的，口渴的" },
+            { word: "due", translation: "adj. 到期的，应付的" },
+            { word: "dull", translation: "adj. 钝的，迟钝的" },
+            { word: "during", translation: "prep. 在…期间" },
+            { word: "dust", translation: "n. 灰尘，尘埃" },
+            { word: "duty", translation: "n. 责任，关税" },
+            { word: "earn", translation: "v. 赚，赚得" },
+            { word: "earth", translation: "n. 地球，土地" },
+            { word: "ease", translation: "n. 轻松，舒适" },
+            { word: "educate", translation: "v. 教育，培养" },
+            { word: "effect", translation: "n. 影响，效果" },
+            { word: "effort", translation: "n. 努力，成就" },
+            { word: "elect", translation: "v. 选举，选择" },
+            { word: "electric", translation: "adj. 电的，电动的" },
+            { word: "embarrass", translation: "v. 使局促不安" },
+            { word: "employ", translation: "v. 使用，采用" },
+            { word: "encourage", translation: "v. 鼓励，怂恿" },
+            { word: "engage", translation: "v. 从事，参与" },
+            { word: "enjoy", translation: "v. 欣赏，享受" },
+            { word: "enter", translation: "v. 进入，开始" },
+            { word: "entertain", translation: "v. 娱乐，招待" },
+            { word: "entire", translation: "adj. 全部的，整个的" },
+            { word: "entrance", translation: "n. 入口，进入" },
+            { word: "envy", translation: "n. 嫉妒，妒忌" },
+            { word: "equal", translation: "adj. 平等的，相等的" },
+            { word: "error", translation: "n. 误差，错误" },
+            { word: "escape", translation: "v. 逃避，避开" },
+            { word: "especially", translation: "adv. 特别，尤其" },
+            { word: "establish", translation: "v. 建立，创建" },
+            { word: "evaluate", translation: "v. 评价，估价" },
+            { word: "event", translation: "n. 事件，大事" },
+            { word: "exact", translation: "adj. 准确的，精密的" },
+            { word: "examine", translation: "v. 检查，调查" },
+            { word: "example", translation: "n. 例子，榜样" },
+            { word: "excellent", translation: "adj. 卓越的，极好的" },
+            { word: "except", translation: "prep. 除…之外" },
+            { word: "excite", translation: "v. 使兴奋，使激动" },
+            { word: "exclude", translation: "v. 排除，排斥" },
+            { word: "exist", translation: "v. 存在，生存" },
+            { word: "expect", translation: "v. 期望，指望" },
+            { word: "explain", translation: "v. 说明，解释" },
+            { word: "explode", translation: "v. 爆炸，爆发" },
+            { word: "explore", translation: "v. 探索，探测" },
+            { word: "export", translation: "n. 输出，出口" },
+            { word: "express", translation: "v. 表达，快递" },
+            { word: "extend", translation: "v. 延伸，扩大" },
+            { word: "extra", translation: "adj. 额外的" },
+            { word: "extreme", translation: "adj. 极端的" },
+            { word: "factor", translation: "n. 因素，要素" },
+            { word: "fail", translation: "v. 失败，未能" },
+            { word: "fair", translation: "adj. 公平的" },
+            { word: "faith", translation: "n. 信仰，信念" },
+            { word: "false", translation: "adj. 错误的，虚伪的" },
+            { word: "fame", translation: "n. 名声，名望" },
+            { word: "farm", translation: "n. 农场，农家" },
+            { word: "fashion", translation: "n. 时尚，时装" }
+        ];
+
+        // 游戏状态
+        let gameState = {
+            isPlaying: false,
+            currentWord: null,
+            wordQueue: [],
+            usedWords: [],
+            total: 0,
+            correct: 0,
+            wrong: 0,
+            wrongWords: []
+        };
+
+        // DOM元素
+        const wordDisplay = document.getElementById('wordDisplay');
+        const hint = document.getElementById('hint');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const optionBtns = document.querySelectorAll('.option-btn');
+        const startBtn = document.getElementById('startBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const totalCount = document.getElementById('totalCount');
+        const correctCount = document.getElementById('correctCount');
+        const wrongCount = document.getElementById('wrongCount');
+        const accuracyRate = document.getElementById('accuracyRate');
+        const wrongWordsContainer = document.getElementById('wrongWordsContainer');
+        const wrongWordsCount = document.getElementById('wrongWordsCount');
+        const gameOverModal = document.getElementById('gameOverModal');
+        const modalTotal = document.getElementById('modalTotal');
+        const modalAccuracy = document.getElementById('modalAccuracy');
+        const restartBtn = document.getElementById('restartBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const modeToggle = document.getElementById('modeToggle');
+
+        // 初始化单词队列
+        function initWordQueue() {
+            gameState.wordQueue = [...wordList];
+            gameState.usedWords = [];
+            gameState.wrongWords = [];
+        }
+
+        // 获取随机单词
+        function getRandomWord() {
+            if (gameState.wordQueue.length === 0) {
+                if (gameState.usedWords.length === 0) return null;
+                gameState.wordQueue = [...gameState.usedWords];
+                gameState.usedWords = [];
+            }
+            
+            const randomIndex = Math.floor(Math.random() * gameState.wordQueue.length);
+            const word = gameState.wordQueue.splice(randomIndex, 1)[0];
+            gameState.usedWords.push(word);
+            return word;
+        }
+
+        // 生成选项
+        function generateOptions(correctWord) {
+            const options = [correctWord.translation];
+            
+            // 生成3个错误选项
+            while (options.length < 4) {
+                const randomWord = wordList[Math.floor(Math.random() * wordList.length)];
+                if (!options.includes(randomWord.translation) && randomWord.word !== correctWord.word) {
+                    options.push(randomWord.translation);
+                }
+            }
+            
+            // 打乱选项顺序
+            return options.sort(() => Math.random() - 0.5);
+        }
+
+        // 显示当前单词
+        function displayWord() {
+            if (gameState.wordQueue.length === 0 && gameState.usedWords.length === wordList.length) {
+                endGame();
+                return;
+            }
+
+            gameState.currentWord = getRandomWord();
+            wordDisplay.textContent = gameState.currentWord.word;
+            hint.textContent = '请选择正确的中文意思';
+            
+            const options = generateOptions(gameState.currentWord);
+            
+            optionBtns.forEach((btn, index) => {
+                btn.textContent = options[index];
+                btn.classList.remove('border-success', 'border-danger', 'border-primary');
+                btn.classList.add('border-gray-200', 'dark:border-gray-700');
+                btn.disabled = false;
+            });
+        }
+
+        // 检查答案
+        function checkAnswer(selectedIndex) {
+            const selectedTranslation = optionBtns[selectedIndex].textContent;
+            const isCorrect = selectedTranslation === gameState.currentWord.translation;
+            
+            gameState.total++;
+            
+            if (isCorrect) {
+                gameState.correct++;
+                optionBtns[selectedIndex].classList.remove('border-gray-200', 'dark:border-gray-700');
+                optionBtns[selectedIndex].classList.add('border-success');
+                hint.textContent = '✅ 回答正确！';
+            } else {
+                gameState.wrong++;
+                optionBtns[selectedIndex].classList.remove('border-gray-200', 'dark:border-gray-700');
+                optionBtns[selectedIndex].classList.add('border-danger');
+                
+                // 显示正确答案
+                optionBtns.forEach(btn => {
+                    if (btn.textContent === gameState.currentWord.translation) {
+                        btn.classList.remove('border-gray-200', 'dark:border-gray-700');
+                        btn.classList.add('border-success');
+                    }
+                });
+                
+                // 添加到错题本
+                if (!gameState.wrongWords.some(item => item.word === gameState.currentWord.word)) {
+                    gameState.wrongWords.push(gameState.currentWord);
+                }
+                
+                hint.textContent = '❌ 回答错误，请看正确答案';
+            }
+            
+            // 禁用所有按钮
+            optionBtns.forEach(btn => btn.disabled = true);
+            
+            // 更新统计
+            updateStats();
+            updateWrongWords();
+            
+            // 显示下一题按钮
+            nextBtn.classList.remove('hidden');
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            totalCount.textContent = gameState.total;
+            correctCount.textContent = gameState.correct;
+            wrongCount.textContent = gameState.wrong;
+            
+            const accuracy = gameState.total === 0 ? 0 : Math.round((gameState.correct / gameState.total) * 100);
+            accuracyRate.textContent = `${accuracy}%`;
+        }
+
+        // 更新错题本
+        function updateWrongWords() {
+            wrongWordsCount.textContent = `${gameState.wrongWords.length} 个错题`;
+            
+            if (gameState.wrongWords.length === 0) {
+                wrongWordsContainer.innerHTML = '<p class="text-neutral text-center py-4">暂无错题</p>';
+                return;
+            }
+            
+            wrongWordsContainer.innerHTML = '';
+            gameState.wrongWords.forEach(item => {
+                const wordEl = document.createElement('div');
+                wordEl.className = 'flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded';
+                wordEl.innerHTML = `
+                    <span class="font-medium">${item.word}</span>
+                    <span class="text-neutral">${item.translation}</span>
+                `;
+                wrongWordsContainer.appendChild(wordEl);
+            });
+        }
+
+        // 开始游戏
+        function startGame() {
+            gameState = {
+                isPlaying: true,
+                currentWord: null,
+                wordQueue: [],
+                usedWords: [],
+                total: 0,
+                correct: 0,
+                wrong: 0,
+                wrongWords: []
+            };
+            
+            initWordQueue();
+            updateStats();
+            updateWrongWords();
+            startBtn.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            displayWord();
+        }
+
+        // 下一题
+        function nextQuestion() {
+            nextBtn.classList.add('hidden');
+            displayWord();
+        }
+
+        // 结束游戏
+        function endGame() {
+            gameState.isPlaying = false;
+            const accuracy = gameState.total === 0 ? 0 : Math.round((gameState.correct / gameState.total) * 100);
+            
+            modalTotal.textContent = gameState.total;
+            modalAccuracy.textContent = `${accuracy}%`;
+            
+            gameOverModal.classList.remove('hidden');
+        }
+
+        // 重置游戏
+        function resetGame() {
+            gameState = {
+                isPlaying: false,
+                currentWord: null,
+                wordQueue: [],
+                usedWords: [],
+                total: 0,
+                correct: 0,
+                wrong: 0,
+                wrongWords: []
+            };
+            
+            updateStats();
+            updateWrongWords();
+            startBtn.classList.remove('hidden');
+            nextBtn.classList.add('hidden');
+            wordDisplay.textContent = '点击开始游戏';
+            hint.textContent = '准备好开始记忆单词了吗？';
+            
+            optionBtns.forEach(btn => {
+                btn.textContent = '请先开始游戏';
+                btn.classList.remove('border-success', 'border-danger', 'border-primary');
+                btn.classList.add('border-gray-200', 'dark:border-gray-700');
+                btn.disabled = true;
+            });
+        }
+
+        // 切换暗黑模式
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+        }
+
+        // 事件监听
+        startBtn.addEventListener('click', startGame);
+        nextBtn.addEventListener('click', nextQuestion);
+        resetBtn.addEventListener('click', resetGame);
+        modeToggle.addEventListener('click', toggleDarkMode);
+        restartBtn.addEventListener('click', () => {
+            gameOverModal.classList.add('hidden');
+            resetGame();
+        });
+
+        // 选项按钮点击事件
+        optionBtns.forEach((btn, index) => {
+            btn.addEventListener('click', () => {
+                if (gameState.isPlaying && !btn.disabled) {
+                    checkAnswer(index);
+                }
+            });
+        });
+
+        // 初始化暗黑模式
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</body>
+</html>
